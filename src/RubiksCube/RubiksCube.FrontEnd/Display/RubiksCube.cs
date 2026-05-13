@@ -61,29 +61,29 @@ public sealed class RubiksCube : Game
 
     protected override void Update(GameTime gameTime)
     {
-        var kb = Keyboard.GetState();
+        var keyboard = Keyboard.GetState();
 
-        if (kb.IsKeyDown(Keys.Escape))
+        if (keyboard.IsKeyDown(Keys.Escape))
         {
             Exit();
         }
 
-        if (kb.IsKeyDown(Keys.Left))
+        if (keyboard.IsKeyDown(Keys.Left))
         {
             _yaw -= 0.02f;
         }
 
-        if (kb.IsKeyDown(Keys.Right))
+        if (keyboard.IsKeyDown(Keys.Right))
         {
             _yaw += 0.02f;
         }
 
-        if (kb.IsKeyDown(Keys.Up))
+        if (keyboard.IsKeyDown(Keys.Up))
         {
             _pitch -= 0.02f;
         }
 
-        if (kb.IsKeyDown(Keys.Down))
+        if (keyboard.IsKeyDown(Keys.Down))
         {
             _pitch += 0.02f;
         }
