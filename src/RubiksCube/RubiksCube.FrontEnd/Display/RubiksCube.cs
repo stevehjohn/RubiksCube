@@ -83,7 +83,7 @@ public sealed class RubiksCube : Game
 
     protected override void Draw(GameTime gameTime)
     {
-        GraphicsDevice.Clear(Color.FromNonPremultiplied(20, 20, 20, 255));
+        GraphicsDevice.Clear(Color.FromNonPremultiplied(70, 70, 70, 255));
 
         GraphicsDevice.RasterizerState = RasterizerState.CullNone;
         
