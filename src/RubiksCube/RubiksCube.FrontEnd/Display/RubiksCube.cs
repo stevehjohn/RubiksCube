@@ -2,11 +2,12 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace RubiksCube.FrontEnd;
+namespace RubiksCube.FrontEnd.Display;
 
 public sealed class RubiksCube : Game
 {
     // ReSharper disable once NotAccessedField.Local
+    // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
     private readonly GraphicsDeviceManager _graphics;
 
     private BasicEffect _effect;
@@ -31,6 +32,8 @@ public sealed class RubiksCube : Game
         _graphics = new GraphicsDeviceManager(this);
 
         IsMouseVisible = true;
+        
+        _graphics.PreferMultiSampling = true;
     }
 
     protected override void LoadContent()

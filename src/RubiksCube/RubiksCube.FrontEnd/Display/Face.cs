@@ -1,4 +1,4 @@
-namespace RubiksCube.FrontEnd;
+namespace RubiksCube.FrontEnd.Display;
 
 public enum Face
 {
