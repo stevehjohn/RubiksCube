@@ -11,10 +11,13 @@ public sealed class RubiksCube : Game
     private readonly GraphicsDeviceManager _graphics;
 
     private BasicEffect _effect;
+    
     private Matrix _view;
+    
     private Matrix _projection;
 
     private float _yaw = 0.7f;
+    
     private float _pitch = -0.45f;
 
     private readonly Color[] _faceColors =
