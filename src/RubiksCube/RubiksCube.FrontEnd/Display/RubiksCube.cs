@@ -37,6 +37,8 @@ public sealed class RubiksCube : Game
         IsMouseVisible = true;
 
         _graphics.PreferMultiSampling = true;
+        
+        Window.Title = "RubiksCube";
     }
 
     protected override void LoadContent()
