@@ -146,34 +146,34 @@ public sealed class RubiksCube : Game
 
         var stickerHalf = h - stickerInset;
 
-        if (y == 1)
+        switch (y)
         {
-            DrawSticker(c + new Vector3(0, h + stickerOffset, 0), Face.Up, stickerHalf, stickerThickness, _faceColors[0]);
+            case 1:
+                DrawSticker(c + new Vector3(0, h + stickerOffset, 0), Face.Up, stickerHalf, stickerThickness, _faceColors[0]);
+                break;
+            case -1:
+                DrawSticker(c + new Vector3(0, -h - stickerOffset, 0), Face.Down, stickerHalf, stickerThickness, _faceColors[1]);
+                break;
         }
 
-        if (y == -1)
+        switch (z)
         {
-            DrawSticker(c + new Vector3(0, -h - stickerOffset, 0), Face.Down, stickerHalf, stickerThickness, _faceColors[1]);
+            case 1:
+                DrawSticker(c + new Vector3(0, 0, h + stickerOffset), Face.Front, stickerHalf, stickerThickness, _faceColors[2]);
+                break;
+            case -1:
+                DrawSticker(c + new Vector3(0, 0, -h - stickerOffset), Face.Back, stickerHalf, stickerThickness, _faceColors[3]);
+                break;
         }
 
-        if (z == 1)
+        switch (x)
         {
-            DrawSticker(c + new Vector3(0, 0, h + stickerOffset), Face.Front, stickerHalf, stickerThickness, _faceColors[2]);
-        }
-
-        if (z == -1)
-        {
-            DrawSticker(c + new Vector3(0, 0, -h - stickerOffset), Face.Back, stickerHalf, stickerThickness, _faceColors[3]);
-        }
-
-        if (x == -1)
-        {
-            DrawSticker(c + new Vector3(-h - stickerOffset, 0, 0), Face.Left, stickerHalf, stickerThickness, _faceColors[4]);
-        }
-
-        if (x == 1)
-        {
-            DrawSticker(c + new Vector3(h + stickerOffset, 0, 0), Face.Right, stickerHalf, stickerThickness, _faceColors[5]);
+            case -1:
+                DrawSticker(c + new Vector3(-h - stickerOffset, 0, 0), Face.Left, stickerHalf, stickerThickness, _faceColors[4]);
+                break;
+            case 1:
+                DrawSticker(c + new Vector3(h + stickerOffset, 0, 0), Face.Right, stickerHalf, stickerThickness, _faceColors[5]);
+                break;
         }
     }
 
@@ -224,34 +224,33 @@ public sealed class RubiksCube : Game
 
     private void DrawSticker(Vector3 c, Face face, float half, float thickness, Color color)
     {
-        var bodyHalf = half;
-
         var t = thickness / 2f;
 
+        // ReSharper disable once SwitchStatementHandlesSomeKnownEnumValuesWithDefault
         switch (face)
         {
             case Face.Up:
-                DrawBox(c + new Vector3(0, t, 0), bodyHalf, t, bodyHalf, color);
+                DrawBox(c + new Vector3(0, t, 0), half, t, half, color);
                 break;
 
             case Face.Down:
-                DrawBox(c + new Vector3(0, -t, 0), bodyHalf, t, bodyHalf, color);
+                DrawBox(c + new Vector3(0, -t, 0), half, t, half, color);
                 break;
 
             case Face.Front:
-                DrawBox(c + new Vector3(0, 0, t), bodyHalf, bodyHalf, t, color);
+                DrawBox(c + new Vector3(0, 0, t), half, half, t, color);
                 break;
 
             case Face.Back:
-                DrawBox(c + new Vector3(0, 0, -t), bodyHalf, bodyHalf, t, color);
+                DrawBox(c + new Vector3(0, 0, -t), half, half, t, color);
                 break;
 
             case Face.Left:
-                DrawBox(c + new Vector3(-t, 0, 0), t, bodyHalf, bodyHalf, color);
+                DrawBox(c + new Vector3(-t, 0, 0), t, half, half, color);
                 break;
 
             case Face.Right:
-                DrawBox(c + new Vector3(t, 0, 0), t, bodyHalf, bodyHalf, color);
+                DrawBox(c + new Vector3(t, 0, 0), t, half, half, color);
                 break;
         }
     }
@@ -266,7 +265,7 @@ public sealed class RubiksCube : Game
 
             new VertexPositionColor(a, color),
             new VertexPositionColor(c, color),
-            new VertexPositionColor(d, color),
+            new VertexPositionColor(d, color)
         };
 
         GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, 2);
