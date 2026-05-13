@@ -32,7 +32,7 @@ public sealed class RubiksCube : Game
         _graphics = new GraphicsDeviceManager(this);
 
         IsMouseVisible = true;
-        
+
         _graphics.PreferMultiSampling = true;
     }
 
@@ -86,15 +86,15 @@ public sealed class RubiksCube : Game
         GraphicsDevice.Clear(Color.FromNonPremultiplied(70, 70, 70, 255));
 
         GraphicsDevice.RasterizerState = RasterizerState.CullNone;
-        
+
         GraphicsDevice.DepthStencilState = DepthStencilState.Default;
 
         var world = Matrix.CreateRotationX(_pitch) * Matrix.CreateRotationY(_yaw);
 
         _effect.World = world;
-        
+
         _effect.View = _view;
-        
+
         _effect.Projection = _projection;
 
         foreach (var pass in _effect.CurrentTechnique.Passes)
@@ -110,6 +110,7 @@ public sealed class RubiksCube : Game
     private void DrawRubiksCube()
     {
         const float cubieSize = 0.92f;
+
         const float spacing = 1.05f;
 
         for (var x = -1; x <= 1; x++)
@@ -126,6 +127,11 @@ public sealed class RubiksCube : Game
         }
     }
 
+    private void DrawBox(Vector3 c, float h, Color color)
+    {
+        DrawBox(c, h, h, h, color);
+    }
+
     private void DrawCubie(Vector3 c, float s, int x, int y, int z)
     {
         var h = s / 2f;
@@ -134,38 +140,40 @@ public sealed class RubiksCube : Game
 
         const float stickerInset = 0.08f;
         
-        const float stickerOffset = 0.01f;
+        const float stickerOffset = 0.015f;
         
+        const float stickerThickness = 0.045f;
+
         var stickerHalf = h - stickerInset;
 
         if (y == 1)
         {
-            DrawFace(c + new Vector3(0, h + stickerOffset, 0), Face.Up, stickerHalf, _faceColors[0]);
+            DrawSticker(c + new Vector3(0, h + stickerOffset, 0), Face.Up, stickerHalf, stickerThickness, _faceColors[0]);
         }
 
         if (y == -1)
         {
-            DrawFace(c + new Vector3(0, -h - stickerOffset, 0), Face.Down, stickerHalf, _faceColors[1]);
+            DrawSticker(c + new Vector3(0, -h - stickerOffset, 0), Face.Down, stickerHalf, stickerThickness, _faceColors[1]);
         }
 
         if (z == 1)
         {
-            DrawFace(c + new Vector3(0, 0, h + stickerOffset), Face.Front, stickerHalf, _faceColors[2]);
+            DrawSticker(c + new Vector3(0, 0, h + stickerOffset), Face.Front, stickerHalf, stickerThickness, _faceColors[2]);
         }
 
         if (z == -1)
         {
-            DrawFace(c + new Vector3(0, 0, -h - stickerOffset), Face.Back, stickerHalf, _faceColors[3]);
+            DrawSticker(c + new Vector3(0, 0, -h - stickerOffset), Face.Back, stickerHalf, stickerThickness, _faceColors[3]);
         }
 
         if (x == -1)
         {
-            DrawFace(c + new Vector3(-h - stickerOffset, 0, 0), Face.Left, stickerHalf, _faceColors[4]);
+            DrawSticker(c + new Vector3(-h - stickerOffset, 0, 0), Face.Left, stickerHalf, stickerThickness, _faceColors[4]);
         }
 
         if (x == 1)
         {
-            DrawFace(c + new Vector3(h + stickerOffset, 0, 0), Face.Right, stickerHalf, _faceColors[5]);
+            DrawSticker(c + new Vector3(h + stickerOffset, 0, 0), Face.Right, stickerHalf, stickerThickness, _faceColors[5]);
         }
     }
 
@@ -212,18 +220,98 @@ public sealed class RubiksCube : Game
         GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, 2);
     }
 
-    private void DrawBox(Vector3 c, float h, Color color)
+    private void DrawBox(Vector3 c, float hx, float hy, float hz, Color color)
     {
-        DrawFace(c + new Vector3(0, h, 0), Face.Up, h, color);
+        DrawQuad(
+            new Vector3(c.X - hx, c.Y + hy, c.Z - hz),
+            new Vector3(c.X + hx, c.Y + hy, c.Z - hz),
+            new Vector3(c.X + hx, c.Y + hy, c.Z + hz),
+            new Vector3(c.X - hx, c.Y + hy, c.Z + hz),
+            color);
+
+        DrawQuad(
+            new Vector3(c.X - hx, c.Y - hy, c.Z + hz),
+            new Vector3(c.X + hx, c.Y - hy, c.Z + hz),
+            new Vector3(c.X + hx, c.Y - hy, c.Z - hz),
+            new Vector3(c.X - hx, c.Y - hy, c.Z - hz),
+            color);
+
+        DrawQuad(
+            new Vector3(c.X - hx, c.Y - hy, c.Z + hz),
+            new Vector3(c.X + hx, c.Y - hy, c.Z + hz),
+            new Vector3(c.X + hx, c.Y + hy, c.Z + hz),
+            new Vector3(c.X - hx, c.Y + hy, c.Z + hz),
+            color);
+
+        DrawQuad(
+            new Vector3(c.X + hx, c.Y - hy, c.Z - hz),
+            new Vector3(c.X - hx, c.Y - hy, c.Z - hz),
+            new Vector3(c.X - hx, c.Y + hy, c.Z - hz),
+            new Vector3(c.X + hx, c.Y + hy, c.Z - hz),
+            color);
+
+        DrawQuad(
+            new Vector3(c.X - hx, c.Y - hy, c.Z - hz),
+            new Vector3(c.X - hx, c.Y - hy, c.Z + hz),
+            new Vector3(c.X - hx, c.Y + hy, c.Z + hz),
+            new Vector3(c.X - hx, c.Y + hy, c.Z - hz),
+            color);
+
+        DrawQuad(
+            new Vector3(c.X + hx, c.Y - hy, c.Z + hz),
+            new Vector3(c.X + hx, c.Y - hy, c.Z - hz),
+            new Vector3(c.X + hx, c.Y + hy, c.Z - hz),
+            new Vector3(c.X + hx, c.Y + hy, c.Z + hz),
+            color);
+    }
+
+    private void DrawSticker(Vector3 c, Face face, float half, float thickness, Color color)
+    {
+        var bodyHalf = half;
         
-        DrawFace(c + new Vector3(0, -h, 0), Face.Down, h, color);
-        
-        DrawFace(c + new Vector3(0, 0, h), Face.Front, h, color);
-        
-        DrawFace(c + new Vector3(0, 0, -h), Face.Back, h, color);
-        
-        DrawFace(c + new Vector3(-h, 0, 0), Face.Left, h, color);
-        
-        DrawFace(c + new Vector3(h, 0, 0), Face.Right, h, color);
+        var t = thickness / 2f;
+
+        switch (face)
+        {
+            case Face.Up:
+                DrawBox(c + new Vector3(0, t, 0), bodyHalf, t, bodyHalf, color);
+                break;
+
+            case Face.Down:
+                DrawBox(c + new Vector3(0, -t, 0), bodyHalf, t, bodyHalf, color);
+                break;
+
+            case Face.Front:
+                DrawBox(c + new Vector3(0, 0, t), bodyHalf, bodyHalf, t, color);
+                break;
+
+            case Face.Back:
+                DrawBox(c + new Vector3(0, 0, -t), bodyHalf, bodyHalf, t, color);
+                break;
+
+            case Face.Left:
+                DrawBox(c + new Vector3(-t, 0, 0), t, bodyHalf, bodyHalf, color);
+                break;
+
+            case Face.Right:
+                DrawBox(c + new Vector3(t, 0, 0), t, bodyHalf, bodyHalf, color);
+                break;
+        }
+    }
+
+    private void DrawQuad(Vector3 a, Vector3 b, Vector3 c, Vector3 d, Color color)
+    {
+        var vertices = new[]
+        {
+            new VertexPositionColor(a, color),
+            new VertexPositionColor(b, color),
+            new VertexPositionColor(c, color),
+
+            new VertexPositionColor(a, color),
+            new VertexPositionColor(c, color),
+            new VertexPositionColor(d, color),
+        };
+
+        GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, 2);
     }
 }
