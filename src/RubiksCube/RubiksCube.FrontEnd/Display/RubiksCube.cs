@@ -16,9 +16,9 @@ public sealed class RubiksCube : Game
     
     private Matrix _projection;
 
-    private float _yaw = 0.7f;
+    private float _yaw = -0.179993838f;
     
-    private float _pitch = -0.45f;
+    private float _pitch = -1.59999871f;
 
     private readonly Color[] _faceColors =
     {
