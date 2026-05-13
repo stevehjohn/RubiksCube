@@ -2,7 +2,7 @@
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
-namespace Rubiks.FrontEnd;
+namespace RubiksCube.FrontEnd;
 
 public sealed class RubiksCube : Game
 {
