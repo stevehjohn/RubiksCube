@@ -21,14 +21,14 @@ public sealed class RubiksCube : Game
     private float _pitch = -1.59999871f;
 
     private readonly Color[] _faceColors =
-    {
+    [
         Color.White,
         Color.Yellow,
         Color.Red,
         Color.Orange,
         Color.Blue,
         Color.Green
-    };
+    ];
 
     public RubiksCube()
     {
