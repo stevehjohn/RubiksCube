@@ -139,9 +139,9 @@ public sealed class RubiksCube : Game
         DrawBox(c, h, Color.Black);
 
         const float stickerInset = 0.08f;
-        
+
         const float stickerOffset = 0.015f;
-        
+
         const float stickerThickness = 0.045f;
 
         var stickerHalf = h - stickerInset;
@@ -175,49 +175,6 @@ public sealed class RubiksCube : Game
         {
             DrawSticker(c + new Vector3(h + stickerOffset, 0, 0), Face.Right, stickerHalf, stickerThickness, _faceColors[5]);
         }
-    }
-
-    private void DrawFace(Vector3 c, Face face, float h, Color color)
-    {
-        Vector3 a, b, d, e;
-
-        switch (face)
-        {
-            case Face.Up:
-            case Face.Down:
-                a = new Vector3(-h, 0, -h);
-                b = new Vector3(h, 0, -h);
-                d = new Vector3(h, 0, h);
-                e = new Vector3(-h, 0, h);
-                break;
-
-            case Face.Front:
-            case Face.Back:
-                a = new Vector3(-h, -h, 0);
-                b = new Vector3(h, -h, 0);
-                d = new Vector3(h, h, 0);
-                e = new Vector3(-h, h, 0);
-                break;
-
-            default:
-                a = new Vector3(0, -h, -h);
-                b = new Vector3(0, -h, h);
-                d = new Vector3(0, h, h);
-                e = new Vector3(0, h, -h);
-                break;
-        }
-
-        var vertices = new[]
-        {
-            new VertexPositionColor(c + a, color),
-            new VertexPositionColor(c + b, color),
-            new VertexPositionColor(c + d, color),
-            new VertexPositionColor(c + a, color),
-            new VertexPositionColor(c + d, color),
-            new VertexPositionColor(c + e, color),
-        };
-
-        GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, 2);
     }
 
     private void DrawBox(Vector3 c, float hx, float hy, float hz, Color color)
@@ -268,7 +225,7 @@ public sealed class RubiksCube : Game
     private void DrawSticker(Vector3 c, Face face, float half, float thickness, Color color)
     {
         var bodyHalf = half;
-        
+
         var t = thickness / 2f;
 
         switch (face)
