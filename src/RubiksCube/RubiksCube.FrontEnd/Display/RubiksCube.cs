@@ -18,9 +18,9 @@ public sealed class RubiksCube : Game
     private readonly Queue<Move> _solveQueue = [];
 
     private BasicEffect _effect;
-    
+
     private Matrix _view;
-    
+
     private Matrix _projection;
 
     private Matrix _primitiveTransform = Matrix.Identity;
@@ -36,7 +36,7 @@ public sealed class RubiksCube : Game
     private bool _isSolving;
 
     private float _yaw = -0.179993838f;
-    
+
     private float _pitch = -1.59999871f;
 
     private float _cameraDistance = 9.95f;
@@ -108,7 +108,7 @@ public sealed class RubiksCube : Game
 
         _previousKeyboard = Keyboard.GetState();
         _previousMouse = Mouse.GetState();
-        
+
         base.Initialize();
     }
 
@@ -226,7 +226,7 @@ public sealed class RubiksCube : Game
 
     private bool TryStartMouseFaceRotation(MouseState mouse)
     {
-        if (_activeRotation is not null || _isSolving || !TryPickCubeFace(mouse, out var face))
+        if (_activeRotation is not null || _isSolving || ! TryPickCubeFace(mouse, out var face))
         {
             return false;
         }
@@ -234,7 +234,7 @@ public sealed class RubiksCube : Game
         var keyboard = Keyboard.GetState();
         var counterClockwise = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
 
-        StartFaceRotation(face, !counterClockwise);
+        StartFaceRotation(face, ! counterClockwise);
         return true;
     }
 
@@ -258,7 +258,7 @@ public sealed class RubiksCube : Game
             new Vector3(CubePickHalfExtent, CubePickHalfExtent, CubePickHalfExtent));
         var distance = ray.Intersects(bounds);
 
-        if (!distance.HasValue)
+        if (! distance.HasValue)
         {
             face = Face.Front;
             return false;
@@ -349,7 +349,7 @@ public sealed class RubiksCube : Game
             return;
         }
 
-        rotation.Elapsed += (float)gameTime.ElapsedGameTime.TotalSeconds;
+        rotation.Elapsed += (float) gameTime.ElapsedGameTime.TotalSeconds;
 
         if (rotation.Elapsed < RotationDuration)
         {
@@ -376,33 +376,33 @@ public sealed class RubiksCube : Game
 
         if (WasKeyPressed(keyboard, Keys.U))
         {
-            StartFaceRotation(Face.Up, !counterClockwise);
+            StartFaceRotation(Face.Up, ! counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.D))
         {
-            StartFaceRotation(Face.Down, !counterClockwise);
+            StartFaceRotation(Face.Down, ! counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.F))
         {
-            StartFaceRotation(Face.Front, !counterClockwise);
+            StartFaceRotation(Face.Front, ! counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.B))
         {
-            StartFaceRotation(Face.Back, !counterClockwise);
+            StartFaceRotation(Face.Back, ! counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.L))
         {
-            StartFaceRotation(Face.Left, !counterClockwise);
+            StartFaceRotation(Face.Left, ! counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.R))
         {
-            StartFaceRotation(Face.Right, !counterClockwise);
+            StartFaceRotation(Face.Right, ! counterClockwise);
         }
     }
 
     private void TryStartSolveAnimation(KeyboardState keyboard)
     {
-        if (_activeRotation is not null || _isSolving || !WasKeyPressed(keyboard, Keys.Space))
+        if (_activeRotation is not null || _isSolving || ! WasKeyPressed(keyboard, Keys.Space))
         {
             return;
         }
@@ -427,7 +427,7 @@ public sealed class RubiksCube : Game
 
     private void StartNextSolveRotation()
     {
-        if (!_solveQueue.TryDequeue(out var move))
+        if (! _solveQueue.TryDequeue(out var move))
         {
             _isSolving = false;
             return;
@@ -479,7 +479,7 @@ public sealed class RubiksCube : Game
         List<Move> solution,
         SolveSearchBudget budget)
     {
-        if (!budget.TryConsume())
+        if (! budget.TryConsume())
         {
             return false;
         }
@@ -594,7 +594,7 @@ public sealed class RubiksCube : Game
 
     private bool WasKeyPressed(KeyboardState keyboard, Keys key)
     {
-        return keyboard.IsKeyDown(key) && !_previousKeyboard.IsKeyDown(key);
+        return keyboard.IsKeyDown(key) && ! _previousKeyboard.IsKeyDown(key);
     }
 
     private void CompleteFaceRotation(FaceRotation rotation)
@@ -626,7 +626,7 @@ public sealed class RubiksCube : Game
 
     private Matrix GetCubieAnimationTransform(Cubie cubie)
     {
-        if (_activeRotation is not { } rotation || !IsCubieOnFace(cubie, rotation.Face))
+        if (_activeRotation is not { } rotation || ! IsCubieOnFace(cubie, rotation.Face))
         {
             return Matrix.Identity;
         }
@@ -733,7 +733,7 @@ public sealed class RubiksCube : Game
     private void DrawCubie(Cubie cubie)
     {
         var centre = cubie.Position * Spacing;
-        
+
         const float h = CubieSize / 2f;
 
         DrawBox(centre, h, Color.Black);
