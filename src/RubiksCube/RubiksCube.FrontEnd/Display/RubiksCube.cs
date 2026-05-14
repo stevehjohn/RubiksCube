@@ -1,4 +1,7 @@
-﻿using Microsoft.Xna.Framework;
+using System;
+using System.Collections.Generic;
+using System.Linq;
+using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
 
@@ -10,15 +13,31 @@ public sealed class RubiksCube : Game
     // ReSharper disable once PrivateFieldCanBeConvertedToLocalVariable
     private readonly GraphicsDeviceManager _graphics;
 
+    private readonly List<Cubie> _cubies = [];
+
     private BasicEffect _effect;
     
     private Matrix _view;
     
     private Matrix _projection;
 
+    private Matrix _primitiveTransform = Matrix.Identity;
+
+    private KeyboardState _previousKeyboard;
+
+    private FaceRotation? _activeRotation;
+
     private float _yaw = -0.179993838f;
     
     private float _pitch = -1.59999871f;
+
+    private const float CubieSize = 0.92f;
+
+    private const float Spacing = 1.05f;
+
+    private const float QuarterTurn = MathHelper.PiOver2;
+
+    private const float RotationDuration = 0.25f;
 
     private readonly Color[] _faceColors =
     [
@@ -42,6 +61,8 @@ public sealed class RubiksCube : Game
     protected override void Initialize()
     {
         Window.Title = "Rubiks Cube";
+
+        CreateSolvedCube();
         
         base.Initialize();
     }
@@ -88,6 +109,11 @@ public sealed class RubiksCube : Game
             _pitch += 0.02f;
         }
 
+        UpdateActiveRotation(gameTime);
+        TryStartFaceRotation(keyboard);
+
+        _previousKeyboard = keyboard;
+
         base.Update(gameTime);
     }
 
@@ -117,11 +143,9 @@ public sealed class RubiksCube : Game
         base.Draw(gameTime);
     }
 
-    private void DrawRubiksCube()
+    private void CreateSolvedCube()
     {
-        const float cubieSize = 0.92f;
-
-        const float spacing = 1.05f;
+        _cubies.Clear();
 
         for (var x = -1; x <= 1; x++)
         {
@@ -129,12 +153,221 @@ public sealed class RubiksCube : Game
             {
                 for (var z = -1; z <= 1; z++)
                 {
-                    var centre = new Vector3(x * spacing, y * spacing, z * spacing);
+                    var cubie = new Cubie(new Vector3(x, y, z));
 
-                    DrawCubie(centre, cubieSize, x, y, z);
+                    if (y == 1)
+                    {
+                        cubie.Stickers.Add(new Sticker(Face.Up, Vector3.Up, _faceColors[0]));
+                    }
+
+                    if (y == -1)
+                    {
+                        cubie.Stickers.Add(new Sticker(Face.Down, Vector3.Down, _faceColors[1]));
+                    }
+
+                    if (z == 1)
+                    {
+                        cubie.Stickers.Add(new Sticker(Face.Front, new Vector3(0, 0, 1), _faceColors[2]));
+                    }
+
+                    if (z == -1)
+                    {
+                        cubie.Stickers.Add(new Sticker(Face.Back, new Vector3(0, 0, -1), _faceColors[3]));
+                    }
+
+                    if (x == -1)
+                    {
+                        cubie.Stickers.Add(new Sticker(Face.Left, Vector3.Left, _faceColors[4]));
+                    }
+
+                    if (x == 1)
+                    {
+                        cubie.Stickers.Add(new Sticker(Face.Right, Vector3.Right, _faceColors[5]));
+                    }
+
+                    _cubies.Add(cubie);
                 }
             }
         }
+    }
+
+    private void UpdateActiveRotation(GameTime gameTime)
+    {
+        if (_activeRotation is not { } rotation)
+        {
+            return;
+        }
+
+        rotation.Elapsed += (float)gameTime.ElapsedGameTime.TotalSeconds;
+
+        if (rotation.Elapsed < RotationDuration)
+        {
+            return;
+        }
+
+        CompleteFaceRotation(rotation);
+        _activeRotation = null;
+    }
+
+    private void TryStartFaceRotation(KeyboardState keyboard)
+    {
+        if (_activeRotation is not null)
+        {
+            return;
+        }
+
+        var counterClockwise = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
+
+        if (WasKeyPressed(keyboard, Keys.U))
+        {
+            _activeRotation = new FaceRotation(Face.Up, !counterClockwise);
+        }
+        else if (WasKeyPressed(keyboard, Keys.D))
+        {
+            _activeRotation = new FaceRotation(Face.Down, !counterClockwise);
+        }
+        else if (WasKeyPressed(keyboard, Keys.F))
+        {
+            _activeRotation = new FaceRotation(Face.Front, !counterClockwise);
+        }
+        else if (WasKeyPressed(keyboard, Keys.B))
+        {
+            _activeRotation = new FaceRotation(Face.Back, !counterClockwise);
+        }
+        else if (WasKeyPressed(keyboard, Keys.L))
+        {
+            _activeRotation = new FaceRotation(Face.Left, !counterClockwise);
+        }
+        else if (WasKeyPressed(keyboard, Keys.R))
+        {
+            _activeRotation = new FaceRotation(Face.Right, !counterClockwise);
+        }
+    }
+
+    private bool WasKeyPressed(KeyboardState keyboard, Keys key)
+    {
+        return keyboard.IsKeyDown(key) && !_previousKeyboard.IsKeyDown(key);
+    }
+
+    private void CompleteFaceRotation(FaceRotation rotation)
+    {
+        var turn = CreateTurnMatrix(rotation.Face, rotation.Clockwise, QuarterTurn);
+
+        foreach (var cubie in _cubies.Where(cubie => IsCubieOnFace(cubie, rotation.Face)))
+        {
+            cubie.Position = RoundToGrid(Vector3.Transform(cubie.Position, turn));
+
+            foreach (var sticker in cubie.Stickers)
+            {
+                sticker.Normal = RoundToGrid(Vector3.TransformNormal(sticker.Normal, turn));
+                sticker.Face = FaceFromNormal(sticker.Normal);
+            }
+        }
+    }
+
+    private void DrawRubiksCube()
+    {
+        foreach (var cubie in _cubies)
+        {
+            _primitiveTransform = GetCubieAnimationTransform(cubie);
+            DrawCubie(cubie);
+        }
+
+        _primitiveTransform = Matrix.Identity;
+    }
+
+    private Matrix GetCubieAnimationTransform(Cubie cubie)
+    {
+        if (_activeRotation is not { } rotation || !IsCubieOnFace(cubie, rotation.Face))
+        {
+            return Matrix.Identity;
+        }
+
+        var progress = MathHelper.Clamp(rotation.Elapsed / RotationDuration, 0f, 1f);
+        var easedProgress = 1f - MathF.Pow(1f - progress, 3f);
+
+        return CreateTurnMatrix(rotation.Face, rotation.Clockwise, easedProgress * QuarterTurn);
+    }
+
+    private static Matrix CreateTurnMatrix(Face face, bool clockwise, float angle)
+    {
+        var outwardNormal = NormalForFace(face);
+        var signedAngle = (clockwise ? -angle : angle) * AxisSign(outwardNormal);
+
+        return Matrix.CreateFromAxisAngle(AbsAxis(outwardNormal), signedAngle);
+    }
+
+    private static bool IsCubieOnFace(Cubie cubie, Face face)
+    {
+        return face switch
+        {
+            Face.Up => cubie.Position.Y == 1,
+            Face.Down => cubie.Position.Y == -1,
+            Face.Front => cubie.Position.Z == 1,
+            Face.Back => cubie.Position.Z == -1,
+            Face.Left => cubie.Position.X == -1,
+            Face.Right => cubie.Position.X == 1,
+            _ => false
+        };
+    }
+
+    private static Vector3 NormalForFace(Face face)
+    {
+        return face switch
+        {
+            Face.Up => Vector3.Up,
+            Face.Down => Vector3.Down,
+            Face.Front => new Vector3(0, 0, 1),
+            Face.Back => new Vector3(0, 0, -1),
+            Face.Left => Vector3.Left,
+            Face.Right => Vector3.Right,
+            _ => Vector3.Zero
+        };
+    }
+
+    private static Face FaceFromNormal(Vector3 normal)
+    {
+        if (normal == Vector3.Up)
+        {
+            return Face.Up;
+        }
+
+        if (normal == Vector3.Down)
+        {
+            return Face.Down;
+        }
+
+        if (normal == new Vector3(0, 0, 1))
+        {
+            return Face.Front;
+        }
+
+        if (normal == new Vector3(0, 0, -1))
+        {
+            return Face.Back;
+        }
+
+        if (normal == Vector3.Left)
+        {
+            return Face.Left;
+        }
+
+        return Face.Right;
+    }
+
+    private static Vector3 AbsAxis(Vector3 normal)
+    {
+        return new Vector3(MathF.Abs(normal.X), MathF.Abs(normal.Y), MathF.Abs(normal.Z));
+    }
+
+    private static float AxisSign(Vector3 normal)
+    {
+        return normal.X + normal.Y + normal.Z;
+    }
+
+    private static Vector3 RoundToGrid(Vector3 value)
+    {
+        return new Vector3(MathF.Round(value.X), MathF.Round(value.Y), MathF.Round(value.Z));
     }
 
     private void DrawBox(Vector3 c, float h, Color color)
@@ -142,11 +375,12 @@ public sealed class RubiksCube : Game
         DrawBox(c, h, h, h, color);
     }
 
-    private void DrawCubie(Vector3 c, float s, int x, int y, int z)
+    private void DrawCubie(Cubie cubie)
     {
-        var h = s / 2f;
+        var centre = cubie.Position * Spacing;
+        var h = CubieSize / 2f;
 
-        DrawBox(c, h, Color.Black);
+        DrawBox(centre, h, Color.Black);
 
         const float stickerInset = 0.08f;
 
@@ -156,34 +390,14 @@ public sealed class RubiksCube : Game
 
         var stickerHalf = h - stickerInset;
 
-        switch (y)
+        foreach (var sticker in cubie.Stickers)
         {
-            case 1:
-                DrawSticker(c + new Vector3(0, h + stickerOffset, 0), Face.Up, stickerHalf, stickerThickness, _faceColors[0]);
-                break;
-            case -1:
-                DrawSticker(c + new Vector3(0, -h - stickerOffset, 0), Face.Down, stickerHalf, stickerThickness, _faceColors[1]);
-                break;
-        }
-
-        switch (z)
-        {
-            case 1:
-                DrawSticker(c + new Vector3(0, 0, h + stickerOffset), Face.Front, stickerHalf, stickerThickness, _faceColors[2]);
-                break;
-            case -1:
-                DrawSticker(c + new Vector3(0, 0, -h - stickerOffset), Face.Back, stickerHalf, stickerThickness, _faceColors[3]);
-                break;
-        }
-
-        switch (x)
-        {
-            case -1:
-                DrawSticker(c + new Vector3(-h - stickerOffset, 0, 0), Face.Left, stickerHalf, stickerThickness, _faceColors[4]);
-                break;
-            case 1:
-                DrawSticker(c + new Vector3(h + stickerOffset, 0, 0), Face.Right, stickerHalf, stickerThickness, _faceColors[5]);
-                break;
+            DrawSticker(
+                centre + sticker.Normal * (h + stickerOffset),
+                sticker.Face,
+                stickerHalf,
+                stickerThickness,
+                sticker.Color);
         }
     }
 
@@ -269,15 +483,40 @@ public sealed class RubiksCube : Game
     {
         var vertices = new[]
         {
-            new VertexPositionColor(a, color),
-            new VertexPositionColor(b, color),
-            new VertexPositionColor(c, color),
+            new VertexPositionColor(Vector3.Transform(a, _primitiveTransform), color),
+            new VertexPositionColor(Vector3.Transform(b, _primitiveTransform), color),
+            new VertexPositionColor(Vector3.Transform(c, _primitiveTransform), color),
 
-            new VertexPositionColor(a, color),
-            new VertexPositionColor(c, color),
-            new VertexPositionColor(d, color)
+            new VertexPositionColor(Vector3.Transform(a, _primitiveTransform), color),
+            new VertexPositionColor(Vector3.Transform(c, _primitiveTransform), color),
+            new VertexPositionColor(Vector3.Transform(d, _primitiveTransform), color)
         };
 
         GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, 2);
+    }
+
+    private sealed class Cubie(Vector3 position)
+    {
+        public Vector3 Position { get; set; } = position;
+
+        public List<Sticker> Stickers { get; } = [];
+    }
+
+    private sealed class Sticker(Face face, Vector3 normal, Color color)
+    {
+        public Face Face { get; set; } = face;
+
+        public Vector3 Normal { get; set; } = normal;
+
+        public Color Color { get; } = color;
+    }
+
+    private sealed class FaceRotation(Face face, bool clockwise)
+    {
+        public Face Face { get; } = face;
+
+        public bool Clockwise { get; } = clockwise;
+
+        public float Elapsed { get; set; }
     }
 }
