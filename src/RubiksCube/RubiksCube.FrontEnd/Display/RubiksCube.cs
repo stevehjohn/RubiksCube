@@ -27,6 +27,8 @@ public sealed class RubiksCube : Game
 
     private MouseState _previousMouse;
 
+    private MouseDragMode _mouseDragMode;
+
     private FaceRotation? _activeRotation;
 
     private float _yaw = -0.179993838f;
@@ -50,6 +52,8 @@ public sealed class RubiksCube : Game
     private const float MinCameraDistance = 5f;
 
     private const float MaxCameraDistance = 18f;
+
+    private const float CubePickHalfExtent = Spacing + CubieSize / 2f + 0.05f;
 
     private readonly Color[] _faceColors =
     [
@@ -163,7 +167,21 @@ public sealed class RubiksCube : Game
 
     private void UpdateMouseControls(MouseState mouse)
     {
-        if (mouse.LeftButton == ButtonState.Pressed && _previousMouse.LeftButton == ButtonState.Pressed)
+        if (mouse.LeftButton == ButtonState.Pressed && _previousMouse.LeftButton == ButtonState.Released)
+        {
+            _mouseDragMode = TryStartMouseFaceRotation(mouse)
+                ? MouseDragMode.FaceTurn
+                : MouseDragMode.Orbit;
+        }
+
+        if (mouse.LeftButton == ButtonState.Released)
+        {
+            _mouseDragMode = MouseDragMode.None;
+        }
+
+        if (mouse.LeftButton == ButtonState.Pressed
+            && _previousMouse.LeftButton == ButtonState.Pressed
+            && _mouseDragMode == MouseDragMode.Orbit)
         {
             _yaw += (mouse.X - _previousMouse.X) * MouseRotationScale;
             _pitch += (mouse.Y - _previousMouse.Y) * MouseRotationScale;
@@ -182,6 +200,70 @@ public sealed class RubiksCube : Game
             MaxCameraDistance);
 
         UpdateView();
+    }
+
+    private bool TryStartMouseFaceRotation(MouseState mouse)
+    {
+        if (_activeRotation is not null || !TryPickCubeFace(mouse, out var face))
+        {
+            return false;
+        }
+
+        var keyboard = Keyboard.GetState();
+        var counterClockwise = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
+
+        _activeRotation = new FaceRotation(face, !counterClockwise);
+        return true;
+    }
+
+    private bool TryPickCubeFace(MouseState mouse, out Face face)
+    {
+        var viewport = GraphicsDevice.Viewport;
+        var world = Matrix.CreateRotationX(_pitch) * Matrix.CreateRotationY(_yaw);
+        var nearPoint = viewport.Unproject(
+            new Vector3(mouse.X, mouse.Y, 0f),
+            _projection,
+            _view,
+            world);
+        var farPoint = viewport.Unproject(
+            new Vector3(mouse.X, mouse.Y, 1f),
+            _projection,
+            _view,
+            world);
+        var ray = new Ray(nearPoint, Vector3.Normalize(farPoint - nearPoint));
+        var bounds = new BoundingBox(
+            new Vector3(-CubePickHalfExtent, -CubePickHalfExtent, -CubePickHalfExtent),
+            new Vector3(CubePickHalfExtent, CubePickHalfExtent, CubePickHalfExtent));
+        var distance = ray.Intersects(bounds);
+
+        if (!distance.HasValue)
+        {
+            face = Face.Front;
+            return false;
+        }
+
+        var hit = ray.Position + ray.Direction * distance.Value;
+        face = FaceFromHitPoint(hit);
+        return true;
+    }
+
+    private static Face FaceFromHitPoint(Vector3 hit)
+    {
+        var absX = MathF.Abs(hit.X);
+        var absY = MathF.Abs(hit.Y);
+        var absZ = MathF.Abs(hit.Z);
+
+        if (absX >= absY && absX >= absZ)
+        {
+            return hit.X < 0 ? Face.Left : Face.Right;
+        }
+
+        if (absY >= absZ)
+        {
+            return hit.Y < 0 ? Face.Down : Face.Up;
+        }
+
+        return hit.Z < 0 ? Face.Back : Face.Front;
     }
 
     private void UpdateView()
@@ -556,6 +638,13 @@ public sealed class RubiksCube : Game
         public Vector3 Normal { get; set; } = normal;
 
         public Color Color { get; } = color;
+    }
+
+    private enum MouseDragMode
+    {
+        None,
+        Orbit,
+        FaceTurn
     }
 
     private sealed class FaceRotation(Face face, bool clockwise)
