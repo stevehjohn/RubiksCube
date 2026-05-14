@@ -15,8 +15,6 @@ public sealed class RubiksCube : Game
 
     private readonly List<Cubie> _cubies = [];
 
-    private readonly List<Move> _moveHistory = [];
-
     private readonly Queue<Move> _solveQueue = [];
 
     private BasicEffect _effect;
@@ -60,6 +58,24 @@ public sealed class RubiksCube : Game
     private const float MaxCameraDistance = 18f;
 
     private const float CubePickHalfExtent = Spacing + CubieSize / 2f + 0.05f;
+
+    private const int MaxSolveDepth = 10;
+
+    private static readonly Move[] CandidateSolveMoves =
+    [
+        new(Face.Up, true),
+        new(Face.Up, false),
+        new(Face.Down, true),
+        new(Face.Down, false),
+        new(Face.Front, true),
+        new(Face.Front, false),
+        new(Face.Back, true),
+        new(Face.Back, false),
+        new(Face.Left, true),
+        new(Face.Left, false),
+        new(Face.Right, true),
+        new(Face.Right, false)
+    ];
 
     private readonly Color[] _faceColors =
     [
@@ -219,7 +235,7 @@ public sealed class RubiksCube : Game
         var keyboard = Keyboard.GetState();
         var counterClockwise = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
 
-        StartFaceRotation(face, !counterClockwise, true);
+        StartFaceRotation(face, !counterClockwise);
         return true;
     }
 
@@ -361,46 +377,51 @@ public sealed class RubiksCube : Game
 
         if (WasKeyPressed(keyboard, Keys.U))
         {
-            StartFaceRotation(Face.Up, !counterClockwise, true);
+            StartFaceRotation(Face.Up, !counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.D))
         {
-            StartFaceRotation(Face.Down, !counterClockwise, true);
+            StartFaceRotation(Face.Down, !counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.F))
         {
-            StartFaceRotation(Face.Front, !counterClockwise, true);
+            StartFaceRotation(Face.Front, !counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.B))
         {
-            StartFaceRotation(Face.Back, !counterClockwise, true);
+            StartFaceRotation(Face.Back, !counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.L))
         {
-            StartFaceRotation(Face.Left, !counterClockwise, true);
+            StartFaceRotation(Face.Left, !counterClockwise);
         }
         else if (WasKeyPressed(keyboard, Keys.R))
         {
-            StartFaceRotation(Face.Right, !counterClockwise, true);
+            StartFaceRotation(Face.Right, !counterClockwise);
         }
     }
 
     private void TryStartSolveAnimation(KeyboardState keyboard)
     {
-        if (_activeRotation is not null || _isSolving || !WasKeyPressed(keyboard, Keys.Space) || _moveHistory.Count == 0)
+        if (_activeRotation is not null || _isSolving || !WasKeyPressed(keyboard, Keys.Space))
+        {
+            return;
+        }
+
+        var solution = FindSolveMoves();
+
+        if (solution.Count == 0)
         {
             return;
         }
 
         _solveQueue.Clear();
 
-        for (var i = _moveHistory.Count - 1; i >= 0; i--)
+        foreach (var move in solution)
         {
-            var move = _moveHistory[i];
-            _solveQueue.Enqueue(new Move(move.Face, !move.Clockwise));
+            _solveQueue.Enqueue(move);
         }
 
-        _moveHistory.Clear();
         _isSolving = true;
         StartNextSolveRotation();
     }
@@ -413,12 +434,139 @@ public sealed class RubiksCube : Game
             return;
         }
 
-        StartFaceRotation(move.Face, move.Clockwise, false);
+        StartFaceRotation(move.Face, move.Clockwise);
     }
 
-    private void StartFaceRotation(Face face, bool clockwise, bool recordMove)
+    private void StartFaceRotation(Face face, bool clockwise)
     {
-        _activeRotation = new FaceRotation(face, clockwise, recordMove);
+        _activeRotation = new FaceRotation(face, clockwise);
+    }
+
+    private List<Move> FindSolveMoves()
+    {
+        var state = CreateSearchState();
+        var solution = new List<Move>();
+
+        if (IsSearchStateSolved(state))
+        {
+            return solution;
+        }
+
+        for (var depth = 1; depth <= MaxSolveDepth; depth++)
+        {
+            solution.Clear();
+
+            if (SearchSolve(state, depth, null, solution))
+            {
+                return [.. solution];
+            }
+        }
+
+        return [];
+    }
+
+    private static bool SearchSolve(List<SearchCubie> state, int remainingDepth, Move? previousMove, List<Move> solution)
+    {
+        if (IsSearchStateSolved(state))
+        {
+            return true;
+        }
+
+        if (remainingDepth == 0 || LowerBoundMovesToSolved(state) > remainingDepth)
+        {
+            return false;
+        }
+
+        foreach (var move in CandidateSolveMoves)
+        {
+            if (previousMove is { } previous && MovesCancel(previous, move))
+            {
+                continue;
+            }
+
+            var nextState = CloneSearchState(state);
+            ApplyMove(nextState, move);
+            solution.Add(move);
+
+            if (SearchSolve(nextState, remainingDepth - 1, move, solution))
+            {
+                return true;
+            }
+
+            solution.RemoveAt(solution.Count - 1);
+        }
+
+        return false;
+    }
+
+    private List<SearchCubie> CreateSearchState()
+    {
+        return _cubies
+            .Select(cubie => new SearchCubie(
+                cubie.Position,
+                cubie.Stickers
+                    .Select(sticker => new SearchSticker(sticker.Normal, sticker.SolvedFace))
+                    .ToList()))
+            .ToList();
+    }
+
+    private static List<SearchCubie> CloneSearchState(List<SearchCubie> state)
+    {
+        return state
+            .Select(cubie => new SearchCubie(
+                cubie.Position,
+                cubie.Stickers
+                    .Select(sticker => new SearchSticker(sticker.Normal, sticker.SolvedFace))
+                    .ToList()))
+            .ToList();
+    }
+
+    private static void ApplyMove(List<SearchCubie> state, Move move)
+    {
+        var turn = CreateTurnMatrix(move.Face, move.Clockwise, QuarterTurn);
+
+        foreach (var cubie in state.Where(cubie => IsCubieOnFace(cubie.Position, move.Face)))
+        {
+            cubie.Position = RoundToGrid(Vector3.Transform(cubie.Position, turn));
+
+            foreach (var sticker in cubie.Stickers)
+            {
+                sticker.Normal = RoundToGrid(Vector3.TransformNormal(sticker.Normal, turn));
+            }
+        }
+    }
+
+    private static bool IsSearchStateSolved(List<SearchCubie> state)
+    {
+        return state.All(cubie =>
+            cubie.Position == SolvedPositionFor(cubie)
+            && cubie.Stickers.All(sticker => sticker.Normal == NormalForFace(sticker.SolvedFace)));
+    }
+
+    private static int LowerBoundMovesToSolved(List<SearchCubie> state)
+    {
+        var unsolvedCubies = state.Count(cubie =>
+            cubie.Position != SolvedPositionFor(cubie)
+            || cubie.Stickers.Any(sticker => sticker.Normal != NormalForFace(sticker.SolvedFace)));
+
+        return (unsolvedCubies + 7) / 8;
+    }
+
+    private static Vector3 SolvedPositionFor(SearchCubie cubie)
+    {
+        var position = Vector3.Zero;
+
+        foreach (var sticker in cubie.Stickers)
+        {
+            position += NormalForFace(sticker.SolvedFace);
+        }
+
+        return position;
+    }
+
+    private static bool MovesCancel(Move previous, Move move)
+    {
+        return previous.Face == move.Face && previous.Clockwise != move.Clockwise;
     }
 
     private bool WasKeyPressed(KeyboardState keyboard, Keys key)
@@ -439,11 +587,6 @@ public sealed class RubiksCube : Game
                 sticker.Normal = RoundToGrid(Vector3.TransformNormal(sticker.Normal, turn));
                 sticker.Face = FaceFromNormal(sticker.Normal);
             }
-        }
-
-        if (rotation.RecordMove)
-        {
-            _moveHistory.Add(new Move(rotation.Face, rotation.Clockwise));
         }
     }
 
@@ -481,14 +624,19 @@ public sealed class RubiksCube : Game
 
     private static bool IsCubieOnFace(Cubie cubie, Face face)
     {
+        return IsCubieOnFace(cubie.Position, face);
+    }
+
+    private static bool IsCubieOnFace(Vector3 position, Face face)
+    {
         return face switch
         {
-            Face.Up => cubie.Position.Y == 1,
-            Face.Down => cubie.Position.Y == -1,
-            Face.Front => cubie.Position.Z == 1,
-            Face.Back => cubie.Position.Z == -1,
-            Face.Left => cubie.Position.X == -1,
-            Face.Right => cubie.Position.X == 1,
+            Face.Up => position.Y == 1,
+            Face.Down => position.Y == -1,
+            Face.Front => position.Z == 1,
+            Face.Back => position.Z == -1,
+            Face.Left => position.X == -1,
+            Face.Right => position.X == 1,
             _ => false
         };
     }
@@ -688,6 +836,8 @@ public sealed class RubiksCube : Game
     {
         public Face Face { get; set; } = face;
 
+        public Face SolvedFace { get; } = face;
+
         public Vector3 Normal { get; set; } = normal;
 
         public Color Color { get; } = color;
@@ -700,15 +850,27 @@ public sealed class RubiksCube : Game
         FaceTurn
     }
 
+    private sealed class SearchCubie(Vector3 position, List<SearchSticker> stickers)
+    {
+        public Vector3 Position { get; set; } = position;
+
+        public List<SearchSticker> Stickers { get; } = stickers;
+    }
+
+    private sealed class SearchSticker(Vector3 normal, Face solvedFace)
+    {
+        public Vector3 Normal { get; set; } = normal;
+
+        public Face SolvedFace { get; } = solvedFace;
+    }
+
     private readonly record struct Move(Face Face, bool Clockwise);
 
-    private sealed class FaceRotation(Face face, bool clockwise, bool recordMove)
+    private sealed class FaceRotation(Face face, bool clockwise)
     {
         public Face Face { get; } = face;
 
         public bool Clockwise { get; } = clockwise;
-
-        public bool RecordMove { get; } = recordMove;
 
         public float Elapsed { get; set; }
     }
