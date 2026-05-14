@@ -31,7 +31,7 @@ public sealed class RubiksCube : Game
 
     private MouseDragMode _mouseDragMode;
 
-    private FaceRotation? _activeRotation;
+    private FaceRotation _activeRotation;
 
     private bool _isSolving;
 
@@ -194,17 +194,12 @@ public sealed class RubiksCube : Game
 
     private void UpdateMouseControls(MouseState mouse)
     {
-        if (mouse.LeftButton == ButtonState.Pressed && _previousMouse.LeftButton == ButtonState.Released)
+        _mouseDragMode = mouse.LeftButton switch
         {
-            _mouseDragMode = TryStartMouseFaceRotation(mouse)
-                ? MouseDragMode.FaceTurn
-                : MouseDragMode.Orbit;
-        }
-
-        if (mouse.LeftButton == ButtonState.Released)
-        {
-            _mouseDragMode = MouseDragMode.None;
-        }
+            ButtonState.Pressed when _previousMouse.LeftButton == ButtonState.Released => TryStartMouseFaceRotation(mouse) ? MouseDragMode.FaceTurn : MouseDragMode.Orbit,
+            ButtonState.Released => MouseDragMode.None,
+            _ => _mouseDragMode
+        };
 
         if (mouse.LeftButton == ButtonState.Pressed
             && _previousMouse.LeftButton == ButtonState.Pressed
@@ -311,34 +306,34 @@ public sealed class RubiksCube : Game
                 {
                     var cubie = new Cubie(new Vector3(x, y, z));
 
-                    if (y == 1)
+                    switch (y)
                     {
-                        cubie.Stickers.Add(new Sticker(Face.Up, Vector3.Up, _faceColors[0]));
+                        case 1:
+                            cubie.Stickers.Add(new Sticker(Face.Up, Vector3.Up, _faceColors[0]));
+                            break;
+                        case -1:
+                            cubie.Stickers.Add(new Sticker(Face.Down, Vector3.Down, _faceColors[1]));
+                            break;
                     }
 
-                    if (y == -1)
+                    switch (z)
                     {
-                        cubie.Stickers.Add(new Sticker(Face.Down, Vector3.Down, _faceColors[1]));
+                        case 1:
+                            cubie.Stickers.Add(new Sticker(Face.Front, new Vector3(0, 0, 1), _faceColors[2]));
+                            break;
+                        case -1:
+                            cubie.Stickers.Add(new Sticker(Face.Back, new Vector3(0, 0, -1), _faceColors[3]));
+                            break;
                     }
 
-                    if (z == 1)
+                    switch (x)
                     {
-                        cubie.Stickers.Add(new Sticker(Face.Front, new Vector3(0, 0, 1), _faceColors[2]));
-                    }
-
-                    if (z == -1)
-                    {
-                        cubie.Stickers.Add(new Sticker(Face.Back, new Vector3(0, 0, -1), _faceColors[3]));
-                    }
-
-                    if (x == -1)
-                    {
-                        cubie.Stickers.Add(new Sticker(Face.Left, Vector3.Left, _faceColors[4]));
-                    }
-
-                    if (x == 1)
-                    {
-                        cubie.Stickers.Add(new Sticker(Face.Right, Vector3.Right, _faceColors[5]));
+                        case -1:
+                            cubie.Stickers.Add(new Sticker(Face.Left, Vector3.Left, _faceColors[4]));
+                            break;
+                        case 1:
+                            cubie.Stickers.Add(new Sticker(Face.Right, Vector3.Right, _faceColors[5]));
+                            break;
                     }
 
                     _cubies.Add(cubie);
@@ -659,12 +654,14 @@ public sealed class RubiksCube : Game
     {
         return face switch
         {
+            // ReSharper disable CompareOfFloatsByEqualityOperator
             Face.Up => position.Y == 1,
             Face.Down => position.Y == -1,
             Face.Front => position.Z == 1,
             Face.Back => position.Z == -1,
             Face.Left => position.X == -1,
             Face.Right => position.X == 1,
+            // ReSharper restore CompareOfFloatsByEqualityOperator
             _ => false
         };
     }
@@ -736,7 +733,8 @@ public sealed class RubiksCube : Game
     private void DrawCubie(Cubie cubie)
     {
         var centre = cubie.Position * Spacing;
-        var h = CubieSize / 2f;
+        
+        const float h = CubieSize / 2f;
 
         DrawBox(centre, h, Color.Black);
 
@@ -746,7 +744,7 @@ public sealed class RubiksCube : Game
 
         const float stickerThickness = 0.025f;
 
-        var stickerHalf = h - stickerInset;
+        const float stickerHalf = h - stickerInset;
 
         foreach (var sticker in cubie.Stickers)
         {
