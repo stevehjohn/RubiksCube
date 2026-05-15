@@ -877,13 +877,6 @@ public sealed class RubiksCube : Game
         public Color Color { get; } = color;
     }
 
-    private enum MouseDragMode
-    {
-        None,
-        Orbit,
-        FaceTurn
-    }
-
     private sealed class SearchCubie(Vector3 position, List<SearchSticker> stickers)
     {
         public Vector3 Position { get; set; } = position;
