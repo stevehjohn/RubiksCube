@@ -414,7 +414,7 @@ public sealed class RubiksCube : Game
 
         _scrambleTurns--;
 
-        if (_scrambleTurns < 3)
+        if (_scrambleTurns < 2)
         {
             _rotationDuration = 0.25f;
         }
