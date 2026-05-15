@@ -41,6 +41,8 @@ public sealed class RubiksCube : Game
 
     private float _cameraDistance = 9.95f;
 
+    private int _scrambleTurns = 0;
+
     private const float CubieSize = 0.92f;
 
     private const float Spacing = 1.05f;
@@ -142,6 +144,8 @@ public sealed class RubiksCube : Game
         TryStartSolveAnimation(keyboard);
 
         TryStartFaceRotation(keyboard);
+        
+        TryScramble(keyboard);
 
         _previousKeyboard = keyboard;
 
@@ -383,9 +387,28 @@ public sealed class RubiksCube : Game
         }
     }
 
+    private void TryScramble(KeyboardState keyboard)
+    {
+        if (_activeRotation is not null || _isSolving || ! WasKeyPressed(keyboard, Keys.S))
+        {
+            return;
+        }
+
+        if (_scrambleTurns == 0)
+        {
+            _scrambleTurns = Random.Shared.Next(30, 60);
+        }
+        
+        var face = (Face) Random.Shared.Next(6);
+        
+        StartFaceRotation(face, Random.Shared.Next(2) == 1);
+
+        _scrambleTurns--;
+    }
+
     private void TryStartSolveAnimation(KeyboardState keyboard)
     {
-        if (_activeRotation is not null || _isSolving || ! WasKeyPressed(keyboard, Keys.Space))
+        if (_activeRotation is not null || _isSolving || _scrambleTurns > 0 || ! WasKeyPressed(keyboard, Keys.Space))
         {
             return;
         }
