@@ -394,9 +394,16 @@ public sealed class RubiksCube : Game
             return;
         }
 
-        if (_scrambleTurns == 0 && WasKeyPressed(keyboard, Keys.S))
+        if (_scrambleTurns == 0)
         {
-            _scrambleTurns = Random.Shared.Next(30, 60);
+            if (WasKeyPressed(keyboard, Keys.S))
+            {
+                _scrambleTurns = Random.Shared.Next(30, 60);
+            }
+            else
+            {
+                return;
+            }
         }
         
         var face = (Face) Random.Shared.Next(6);
