@@ -859,24 +859,6 @@ public sealed class RubiksCube : Game
         GraphicsDevice.DrawUserPrimitives(PrimitiveType.TriangleList, vertices, 0, 2);
     }
 
-    private sealed class Cubie(Vector3 position)
-    {
-        public Vector3 Position { get; set; } = position;
-
-        public List<Sticker> Stickers { get; } = [];
-    }
-
-    private sealed class Sticker(Face face, Vector3 normal, Color color)
-    {
-        public Face Face { get; set; } = face;
-
-        public Face SolvedFace { get; } = face;
-
-        public Vector3 Normal { get; set; } = normal;
-
-        public Color Color { get; } = color;
-    }
-
     private sealed class SearchCubie(Vector3 position, List<SearchSticker> stickers)
     {
         public Vector3 Position { get; set; } = position;
