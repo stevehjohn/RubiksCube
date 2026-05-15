@@ -873,8 +873,6 @@ public sealed class RubiksCube : Game
         public Face SolvedFace { get; } = solvedFace;
     }
 
-    private readonly record struct Move(Face Face, bool Clockwise);
-
     private sealed class SolveSearchBudget(long deadlineTick, int maxNodes)
     {
         private int _searchedNodes;
