@@ -43,13 +43,13 @@ public sealed class RubiksCube : Game
 
     private int _scrambleTurns;
 
+    private  float _rotationDuration = 0.25f;
+
     private const float CubieSize = 0.92f;
 
     private const float Spacing = 1.05f;
 
     private const float QuarterTurn = MathHelper.PiOver2;
-
-    private const float RotationDuration = 0.25f;
 
     private const float MouseRotationScale = 0.01f;
 
@@ -337,7 +337,7 @@ public sealed class RubiksCube : Game
 
         rotation.Elapsed += (float) gameTime.ElapsedGameTime.TotalSeconds;
 
-        if (rotation.Elapsed < RotationDuration)
+        if (rotation.Elapsed < _rotationDuration)
         {
             return;
         }
@@ -398,7 +398,9 @@ public sealed class RubiksCube : Game
         {
             if (WasKeyPressed(keyboard, Keys.S))
             {
-                _scrambleTurns = Random.Shared.Next(20, 40);
+                _scrambleTurns = Random.Shared.Next(40, 80);
+
+                _rotationDuration = 0.1f;
             }
             else
             {
@@ -411,6 +413,11 @@ public sealed class RubiksCube : Game
         StartFaceRotation(face, Random.Shared.Next(2) == 1);
 
         _scrambleTurns--;
+
+        if (_scrambleTurns < 3)
+        {
+            _rotationDuration = 0.25f;
+        }
     }
 
     private void TryStartSolveAnimation(KeyboardState keyboard)
@@ -501,7 +508,7 @@ public sealed class RubiksCube : Game
             return Matrix.Identity;
         }
 
-        var progress = MathHelper.Clamp(rotation.Elapsed / RotationDuration, 0f, 1f);
+        var progress = MathHelper.Clamp(rotation.Elapsed / _rotationDuration, 0f, 1f);
         
         var easedProgress = 1f - MathF.Pow(1f - progress, 3f);
 
