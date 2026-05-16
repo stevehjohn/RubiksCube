@@ -8,7 +8,7 @@ public class Cube
     {
         foreach (var face in Enum.GetValues<Face>())
         {
-            _faces[(int) face] = new Colour[6, 6];
+            _faces[(int) face] = new Colour[3, 3];
         }
     }
 
