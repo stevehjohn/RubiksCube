@@ -4,7 +4,7 @@ public class Cube
 {
     private readonly Colour[][,] _faces = new Colour[6][,];
 
-    private readonly Face[][] _effectedEdges =
+    private readonly Face[][] _affectedEdges =
     [
         [Face.Front, Face.Left, Face.Back, Face.Right], // Up
         [Face.Right, Face.Back, Face.Left, Face.Front], // Down
