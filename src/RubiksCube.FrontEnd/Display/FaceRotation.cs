@@ -1,3 +1,5 @@
+using RubiksCube.Core.Models;
+
 namespace RubiksCube.FrontEnd.Display;
 
 public sealed class FaceRotation(Face face, bool clockwise)

@@ -4,6 +4,7 @@ using System.Linq;
 using Microsoft.Xna.Framework;
 using Microsoft.Xna.Framework.Graphics;
 using Microsoft.Xna.Framework.Input;
+using RubiksCube.Core.Models;
 
 namespace RubiksCube.FrontEnd.Display;
 
