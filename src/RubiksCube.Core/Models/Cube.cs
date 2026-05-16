@@ -4,6 +4,16 @@ public class Cube
 {
     private readonly Colour[][,] _faces = new Colour[6][,];
 
+    private readonly Face[][] _effectedEdges =
+    [
+        [Face.Front, Face.Back, Face.Left, Face.Right], // Up
+        [Face.Front, Face.Back, Face.Left, Face.Right], // Down
+        [Face.Up, Face.Down, Face.Left, Face.Right],    // Front,
+        [Face.Up, Face.Down, Face.Left, Face.Right],    // Back,
+        [Face.Up, Face.Down, Face.Front, Face.Back],    // Left,
+        [Face.Up, Face.Down, Face.Front, Face.Back]     // Right,
+    ];
+
     public Cube()
     {
         foreach (var face in Enum.GetValues<Face>())
