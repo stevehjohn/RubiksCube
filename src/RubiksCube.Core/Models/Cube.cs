@@ -21,9 +21,14 @@ public class Cube
     public void ApplyMove(Face face, Direction direction)
     {
         RotateFace(face, direction);
+        
+        // TODO: RotateEdges(face, direction);
     }
 
     private void RotateFace(Face face, Direction direction)
     {
+        for (var i = 0; i < 4; i++)
+        {
+        }
     }
 }
