@@ -6,12 +6,12 @@ public class Cube
 
     private readonly Face[][] _effectedEdges =
     [
-        [Face.Front, Face.Back, Face.Left, Face.Right], // Up
-        [Face.Front, Face.Back, Face.Left, Face.Right], // Down
-        [Face.Up, Face.Down, Face.Left, Face.Right],    // Front,
-        [Face.Up, Face.Down, Face.Left, Face.Right],    // Back,
-        [Face.Up, Face.Down, Face.Front, Face.Back],    // Left,
-        [Face.Up, Face.Down, Face.Front, Face.Back]     // Right,
+        [Face.Front, Face.Left, Face.Back, Face.Right], // Up
+        [Face.Right, Face.Back, Face.Left, Face.Front], // Down
+        [Face.Up, Face.Right, Face.Down, Face.Left],    // Front,
+        [Face.Left, Face.Down, Face.Right, Face.Up],    // Back,
+        [Face.Up, Face.Front, Face.Down, Face.Back],    // Left,
+        [Face.Back, Face.Down, Face.Front, Face.Up]     // Right,
     ];
 
     public Cube()
