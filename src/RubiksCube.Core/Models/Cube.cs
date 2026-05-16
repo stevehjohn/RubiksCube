@@ -22,7 +22,7 @@ public class Cube
     {
         RotateFace(face, direction);
 
-        // TODO: RotateEdges(face, direction);
+        RotateEdges(face, direction);
     }
 
     private void RotateFace(Face face, Direction direction)
@@ -41,5 +41,9 @@ public class Cube
 
             (matrix[1, 0], matrix[2, 1], matrix[1, 2], matrix[0, 1]) = (matrix[0, 1], matrix[1, 0], matrix[2, 1], matrix[1, 2]);
         }
+    }
+
+    private void RotateEdges(Face face, Direction direction)
+    {
     }
 }
