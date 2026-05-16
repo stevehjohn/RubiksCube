@@ -445,7 +445,27 @@ public sealed class RubiksCube : Game
         
         StartNextSolveRotation();
     }
+    
+    private Color GetFaceColor(Face face, int row, int col)
+    {
+        Vector3 position = face switch
+        {
+            Face.Up    => new Vector3(col - 1, 1,      row - 1),
+            Face.Down  => new Vector3(col - 1, -1,     row - 1),
+            Face.Front => new Vector3(col - 1, row - 1, 1),
+            Face.Back  => new Vector3(col - 1, row - 1, -1),
+            Face.Left  => new Vector3(-1,      row - 1, col - 1),
+            Face.Right => new Vector3(1,       row - 1, col - 1),
+            _ => throw new ArgumentOutOfRangeException(nameof(face))
+        };
 
+        // ReSharper disable CompareOfFloatsByEqualityOperator
+        var cubie = _cubies.Single(c => c.Position.X == position.X && c.Position.Y == position.Y && c.Position.Z == position.Z);
+        // ReSharper restore CompareOfFloatsByEqualityOperator
+
+        return cubie.Stickers.Single(s => s.Face == face).Color;
+    }
+    
     private void StartNextSolveRotation()
     {
         if (! _solveQueue.TryDequeue(out var move))
