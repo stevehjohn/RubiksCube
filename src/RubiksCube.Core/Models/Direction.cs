@@ -2,6 +2,6 @@ namespace RubiksCube.Core.Models;
 
 public enum Direction
 {
-    Clockwise,
-    AntiClockwise
+    Clockwise = 1,
+    AntiClockwise = -1
 }

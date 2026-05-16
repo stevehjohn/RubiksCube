@@ -20,6 +20,10 @@ public class Cube
 
     public void ApplyMove(Face face, Direction direction)
     {
-        var matrix = _faces[(int) face];
+        RotateFace(face, direction);
+    }
+
+    private void RotateFace(Face face, Direction direction)
+    {
     }
 }
