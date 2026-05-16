@@ -43,7 +43,7 @@ public sealed class RubiksCube : Game
 
     private int _scrambleTurns;
 
-    private  float _rotationDuration = 0.25f;
+    private float _rotationDuration = 0.25f;
 
     private const float CubieSize = 0.92f;
 
@@ -144,7 +144,7 @@ public sealed class RubiksCube : Game
         TryStartSolveAnimation(keyboard);
 
         TryStartFaceRotation(keyboard);
-        
+
         TryScramble(keyboard);
 
         _previousKeyboard = keyboard;
@@ -215,28 +215,28 @@ public sealed class RubiksCube : Game
         }
 
         var keyboard = Keyboard.GetState();
-        
+
         var counterClockwise = keyboard.IsKeyDown(Keys.LeftShift) || keyboard.IsKeyDown(Keys.RightShift);
 
         StartFaceRotation(face, ! counterClockwise);
-        
+
         return true;
     }
 
     private bool TryPickCubeFace(MouseState mouse, out Face face)
     {
         var viewport = GraphicsDevice.Viewport;
-        
+
         var world = Matrix.CreateRotationX(_pitch) * Matrix.CreateRotationY(_yaw);
-        
+
         var nearPoint = viewport.Unproject(new Vector3(mouse.X, mouse.Y, 0f), _projection, _view, world);
-        
+
         var farPoint = viewport.Unproject(new Vector3(mouse.X, mouse.Y, 1f), _projection, _view, world);
-        
+
         var ray = new Ray(nearPoint, Vector3.Normalize(farPoint - nearPoint));
-        
+
         var bounds = new BoundingBox(new Vector3(-CubePickHalfExtent, -CubePickHalfExtent, -CubePickHalfExtent), new Vector3(CubePickHalfExtent, CubePickHalfExtent, CubePickHalfExtent));
-        
+
         var distance = ray.Intersects(bounds);
 
         if (! distance.HasValue)
@@ -246,18 +246,18 @@ public sealed class RubiksCube : Game
         }
 
         var hit = ray.Position + ray.Direction * distance.Value;
-        
+
         face = FaceFromHitPoint(hit);
-        
+
         return true;
     }
 
     private static Face FaceFromHitPoint(Vector3 hit)
     {
         var absX = MathF.Abs(hit.X);
-        
+
         var absY = MathF.Abs(hit.Y);
-        
+
         var absZ = MathF.Abs(hit.Z);
 
         if (absX >= absY && absX >= absZ)
@@ -276,7 +276,7 @@ public sealed class RubiksCube : Game
     private void UpdateView()
     {
         var cameraDirection = Vector3.Normalize(new Vector3(5, 5, 7));
-        
+
         _view = Matrix.CreateLookAt(cameraDirection * _cameraDistance, Vector3.Zero, Vector3.Up);
     }
 
@@ -343,7 +343,7 @@ public sealed class RubiksCube : Game
         }
 
         CompleteFaceRotation(rotation);
-        
+
         _activeRotation = null;
 
         if (_isSolving)
@@ -407,9 +407,9 @@ public sealed class RubiksCube : Game
                 return;
             }
         }
-        
+
         var face = (Face) Random.Shared.Next(6);
-        
+
         StartFaceRotation(face, Random.Shared.Next(2) == 1);
 
         _scrambleTurns--;
@@ -442,20 +442,20 @@ public sealed class RubiksCube : Game
         }
 
         _isSolving = true;
-        
+
         StartNextSolveRotation();
     }
-    
+
     private Color GetFaceColor(Face face, int row, int col)
     {
         Vector3 position = face switch
         {
-            Face.Up    => new Vector3(col - 1, 1,      row - 1),
-            Face.Down  => new Vector3(col - 1, -1,     row - 1),
+            Face.Up => new Vector3(col - 1, 1, row - 1),
+            Face.Down => new Vector3(col - 1, -1, row - 1),
             Face.Front => new Vector3(col - 1, row - 1, 1),
-            Face.Back  => new Vector3(col - 1, row - 1, -1),
-            Face.Left  => new Vector3(-1,      row - 1, col - 1),
-            Face.Right => new Vector3(1,       row - 1, col - 1),
+            Face.Back => new Vector3(col - 1, row - 1, -1),
+            Face.Left => new Vector3(-1, row - 1, col - 1),
+            Face.Right => new Vector3(1, row - 1, col - 1),
             _ => throw new ArgumentOutOfRangeException(nameof(face))
         };
 
@@ -465,7 +465,7 @@ public sealed class RubiksCube : Game
 
         return cubie.Stickers.Single(s => s.Face == face).Color;
     }
-    
+
     private void StartNextSolveRotation()
     {
         if (! _solveQueue.TryDequeue(out var move))
@@ -503,7 +503,7 @@ public sealed class RubiksCube : Game
             foreach (var sticker in cubie.Stickers)
             {
                 sticker.Normal = RoundToGrid(Vector3.TransformNormal(sticker.Normal, turn));
-                
+
                 sticker.Face = FaceFromNormal(sticker.Normal);
             }
         }
@@ -514,7 +514,7 @@ public sealed class RubiksCube : Game
         foreach (var cubie in _cubies)
         {
             _primitiveTransform = GetCubieAnimationTransform(cubie);
-            
+
             DrawCubie(cubie);
         }
 
@@ -529,7 +529,7 @@ public sealed class RubiksCube : Game
         }
 
         var progress = MathHelper.Clamp(rotation.Elapsed / _rotationDuration, 0f, 1f);
-        
+
         var easedProgress = 1f - MathF.Pow(1f - progress, 3f);
 
         return CreateTurnMatrix(rotation.Face, rotation.Clockwise, easedProgress * QuarterTurn);
@@ -538,7 +538,7 @@ public sealed class RubiksCube : Game
     private static Matrix CreateTurnMatrix(Face face, bool clockwise, float angle)
     {
         var outwardNormal = NormalForFace(face);
-        
+
         var signedAngle = (clockwise ? -angle : angle) * AxisSign(outwardNormal);
 
         return Matrix.CreateFromAxisAngle(AbsAxis(outwardNormal), signedAngle);
