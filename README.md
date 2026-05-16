@@ -9,3 +9,14 @@
 - Press `Space` to search for and animate a solution from the current cube state.
 - Press `Esc` to exit.
 - Press `S` to scramble.
+
+## Notes
+
+### Faces
+
+White  | Up
+Yellow | Down
+Red    | Front
+Orange | Back
+Blue   | Left
+Green  | Right
